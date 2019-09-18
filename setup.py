@@ -5,5 +5,5 @@ setup(
     packages=find_packages(),
     version='1.0.0',
     description='Neuromation test task',
-    author='Username',
+    author='Alexander Smirnov',
 )
