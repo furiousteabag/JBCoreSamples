@@ -4,14 +4,14 @@ Methods to fine-tune model.
 
   Typical usage example:
 
-    train_generator, validation_generator, test_generator = prepare_generators(path="../data/huge data/",
-                                                                               image_size=(
-                                                                                   224, 224),
-                                                                               batch_size=8,
-                                                                               category_type="rock",
-                                                                               training_folder="non-UV")
-    model = build_model(image_size=train_generator.target_size,
-                        num_classes=train_generator.num_classes)
+    train_generator, validation_generator, _ = prepare_generators(path="../data/huge data/",
+                                                                  image_size=(
+                                                                      224, 224),
+                                                                  batch_size=8,
+                                                                  category_type="rock",
+                                                                  training_folder="non-UV")
+    model = build_model(path="../models/rock/non-UV-VGG16-01-0.66.h5",
+                        fine_tune_at=4)
 
     history = train_model(model=model,
                           train_generator=train_generator,
@@ -40,6 +40,7 @@ def prepare_generators(path: str,
 
     train_datagen = ImageDataGenerator(rescale=1/255)
     validation_datagen = ImageDataGenerator(rescale=1/255)
+    test_datagen = ImageDataGenerator(rescale=1/255)
 
     train_generator = train_datagen.flow_from_directory(
         path + '/prepared data/' + category_type +
@@ -57,7 +58,7 @@ def prepare_generators(path: str,
         class_mode='categorical'
     )
 
-    test_generator = validation_datagen.flow_from_directory(
+    test_generator = test_datagen.flow_from_directory(
         path + '/prepared data/' + category_type +
         '/training data/' + training_folder + '/test/',
         target_size=image_size,
@@ -75,7 +76,7 @@ def build_model(path: str,
                 loss="categorical_crossentropy"):
     """Loads model, unfreezes its layers and compiles it.
     Args:
-        fine_tune_at: Number of layer FROM which we unfreeze model.
+        fine_tune_at: Number of last unfreezed layers.
     """
 
     model = keras.models.load_model(path)
@@ -84,8 +85,11 @@ def build_model(path: str,
 
     print("Number of layers in base model: {}".format(len(model.layers[0].layers)))
 
-    for layer in model.layers[0].layers[:fine_tune_at]:
+    for layer in model.layers[0].layers[:-fine_tune_at]:
         layer.trainable = False
+
+    for layer in model.layers[0].layers:
+        print("{}: {}".format(layer, layer.trainable))
 
     model.compile(optimizer=optimizer,
                   loss=loss,
@@ -139,8 +143,9 @@ def main():
                                                                   batch_size=8,
                                                                   category_type="rock",
                                                                   training_folder="non-UV")
-    model = build_model(path="../models/rock/non-UV-VGG16-01-0.66.h5",
-                        fine_tune_at=10)
+    model = build_model(path="../models/rock/non-UV-VGG16-23-0.70.h5",
+                        fine_tune_at=2,
+                        optimizer=keras.optimizers.Adam(lr=0.000001))
 
     history = train_model(model=model,
                           train_generator=train_generator,

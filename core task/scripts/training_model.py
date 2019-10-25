@@ -38,8 +38,9 @@ def prepare_generators(path: str,
         training_folder: UV or non-UV folder.
     """
 
-    train_datagen = ImageDataGenerator(rescale=1/255)
-    validation_datagen = ImageDataGenerator(rescale=1/255)
+    train_datagen = ImageDataGenerator(rescale=1/255,)
+    validation_datagen = ImageDataGenerator(rescale=1/255,)
+    test_generator = ImageDataGenerator(rescale=1/255,)
 
     train_generator = train_datagen.flow_from_directory(
         path + '/prepared data/' + category_type +
@@ -57,7 +58,7 @@ def prepare_generators(path: str,
         class_mode='categorical'
     )
 
-    test_generator = validation_datagen.flow_from_directory(
+    test_generator = test_generator.flow_from_directory(
         path + '/prepared data/' + category_type +
         '/training data/' + training_folder + '/test/',
         target_size=image_size,
@@ -90,6 +91,8 @@ def build_model(image_size: (int, int),
     model = tf.keras.Sequential([
         base_model,
         keras.layers.Flatten(),
+        keras.layers.Dense(1024, activation='relu'),
+        keras.layers.Dropout(0.5),
         keras.layers.Dense(num_classes, activation='softmax')
     ])
 
